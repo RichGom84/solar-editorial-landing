@@ -1,9 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
+import Link from 'next/link'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const { data: session, status } = useSession()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -13,6 +17,7 @@ export default function Navbar() {
 
   const scrollToForm = () => {
     document.getElementById('consult-form')?.scrollIntoView({ behavior: 'smooth' })
+    setMenuOpen(false)
   }
 
   return (
@@ -24,30 +29,73 @@ export default function Navbar() {
       }`}
     >
       <div className="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
-        <div className="text-2xl font-bold tracking-tighter text-emerald-400 font-headline">
+        <Link href="/" className="text-2xl font-bold tracking-tighter text-emerald-400 font-headline">
           Solar Editorial
-        </div>
+        </Link>
+
+        {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-8">
-          <a href="#services" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">
-            Technology
-          </a>
-          <a href="#cases" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">
-            Cases
-          </a>
-          <a href="#benefits" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">
-            Subsidies
-          </a>
-          <a href="#faq" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">
-            FAQ
-          </a>
+          <a href="#services" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">Technology</a>
+          <a href="#cases" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">Cases</a>
+          <Link href="/products" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">Products</Link>
+          <a href="#faq" className="text-slate-400 font-medium hover:text-emerald-300 transition-colors text-sm">FAQ</a>
         </div>
-        <button
-          onClick={scrollToForm}
-          className="bg-solar-primary text-on-primary px-6 py-2 rounded-lg font-bold hover:scale-95 transition-transform active:opacity-80 shadow-[0_0_15px_rgba(78,222,163,0.3)]"
-        >
-          Consultation
+
+        <div className="hidden md:flex items-center gap-4">
+          {status === 'loading' ? (
+            <div className="w-20 h-8" />
+          ) : session ? (
+            <>
+              <Link href="/mypage" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">마이페이지</Link>
+              {(session.user as { role?: string })?.role === 'ADMIN' && (
+                <Link href="/admin" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">관리자</Link>
+              )}
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="text-slate-400 hover:text-red-400 transition-colors text-sm font-medium">로그아웃</button>
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold">
+                {session.user?.name?.[0] || '?'}
+              </div>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">로그인</Link>
+              <Link href="/register" className="bg-solar-primary text-on-primary px-5 py-2 rounded-lg font-bold text-sm hover:scale-95 transition-transform shadow-[0_0_15px_rgba(78,222,163,0.3)]">
+                회원가입
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Hamburger */}
+        <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-white">
+          <span className="material-symbols-outlined text-2xl">{menuOpen ? 'close' : 'menu'}</span>
         </button>
       </div>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-[#020617]/95 backdrop-blur-xl border-t border-slate-800/50 px-8 py-4 space-y-3">
+          <a href="#services" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">Technology</a>
+          <a href="#cases" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">Cases</a>
+          <Link href="/products" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">Products</Link>
+          <a href="#faq" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">FAQ</a>
+          <hr className="border-slate-800" />
+          {session ? (
+            <>
+              <Link href="/mypage" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">마이페이지</Link>
+              {(session.user as { role?: string })?.role === 'ADMIN' && (
+                <Link href="/admin" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">관리자</Link>
+              )}
+              <button onClick={() => signOut({ callbackUrl: '/' })} className="block text-red-400 py-2">로그아웃</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">로그인</Link>
+              <Link href="/register" onClick={() => setMenuOpen(false)} className="block text-solar-primary font-bold py-2">회원가입</Link>
+            </>
+          )}
+          <button onClick={scrollToForm} className="w-full bg-solar-primary text-on-primary py-3 rounded-lg font-bold mt-2">Consultation</button>
+        </div>
+      )}
     </nav>
   )
 }
