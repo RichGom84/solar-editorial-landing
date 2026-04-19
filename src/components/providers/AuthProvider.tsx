@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
-import { firebaseAuth } from '@/lib/firebase'
+import { firebaseAuth, isFirebaseConfigured } from '@/lib/firebase'
 import { getUserDoc, upsertUserDoc, type Role, type UserDoc } from '@/lib/firestore-db'
 
 interface AuthContextValue {
@@ -41,6 +41,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      console.warn('[AuthProvider] Firebase 환경변수 미설정 — 인증 비활성화')
+      setLoading(false)
+      return
+    }
     const unsub = onAuthStateChanged(firebaseAuth, async (u) => {
       setUser(u)
       if (u) {
