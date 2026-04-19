@@ -1,17 +1,25 @@
 'use client'
 
 import Link from 'next/link'
-import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { signOutFirebase } from '@/lib/firebase'
 
 export default function Header() {
-  const { data: session } = useSession()
+  const { user, role } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const navLinks = [
     { href: '/', label: '홈' },
     { href: '/products', label: '상품' },
   ]
+
+  const handleSignOut = async () => {
+    await signOutFirebase()
+    window.location.href = '/'
+  }
+
+  const initial = user?.displayName?.[0] || user?.email?.[0] || '?'
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#020617]/80 backdrop-blur-xl border-b border-slate-800/50">
@@ -28,24 +36,24 @@ export default function Header() {
             </Link>
           ))}
 
-          {session ? (
+          {user ? (
             <div className="flex items-center gap-4">
               <Link href="/mypage" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">
                 마이페이지
               </Link>
-              {(session.user as { role?: string })?.role === 'ADMIN' && (
+              {role === 'ADMIN' && (
                 <Link href="/admin" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">
                   관리자
                 </Link>
               )}
               <button
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={handleSignOut}
                 className="text-slate-400 hover:text-red-400 transition-colors text-sm font-medium"
               >
                 로그아웃
               </button>
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold">
-                {session.user?.name?.[0] || '?'}
+                {initial}
               </div>
             </div>
           ) : (
@@ -74,13 +82,13 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          {session ? (
+          {user ? (
             <>
               <Link href="/mypage" onClick={() => setMenuOpen(false)} className="block text-on-surface-variant hover:text-white transition-colors py-2">마이페이지</Link>
-              {(session.user as { role?: string })?.role === 'ADMIN' && (
+              {role === 'ADMIN' && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} className="block text-on-surface-variant hover:text-white transition-colors py-2">관리자</Link>
               )}
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="block text-red-400 py-2">로그아웃</button>
+              <button onClick={handleSignOut} className="block text-red-400 py-2">로그아웃</button>
             </>
           ) : (
             <>

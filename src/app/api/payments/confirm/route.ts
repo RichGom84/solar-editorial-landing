@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+
+const MAX_AMOUNT = 100_000_000
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
-    }
+    const body = await req.json()
+    const paymentKey = typeof body.paymentKey === 'string' ? body.paymentKey : null
+    const orderId = typeof body.orderId === 'string' ? body.orderId : null
+    const amount = typeof body.amount === 'number' ? body.amount : null
 
-    if (!prisma) {
-      return NextResponse.json({ error: '데이터베이스가 연결되지 않았습니다.' }, { status: 503 })
-    }
-
-    const { paymentKey, orderId, amount, productId } = await req.json()
-
-    if (!paymentKey || !orderId || !amount) {
+    if (!paymentKey || !orderId || amount == null) {
       return NextResponse.json({ error: '결제 정보가 올바르지 않습니다.' }, { status: 400 })
+    }
+    if (!/^[A-Za-z0-9_-]{1,200}$/.test(paymentKey)) {
+      return NextResponse.json({ error: 'paymentKey 형식 오류' }, { status: 400 })
+    }
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(orderId)) {
+      return NextResponse.json({ error: 'orderId 형식 오류' }, { status: 400 })
+    }
+    if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT || !Number.isInteger(amount)) {
+      return NextResponse.json({ error: 'amount 값 오류' }, { status: 400 })
     }
 
     const secretKey = process.env.TOSS_SECRET_KEY
@@ -36,23 +39,24 @@ export async function POST(req: NextRequest) {
     const confirmData = await confirmRes.json()
 
     if (!confirmRes.ok) {
-      return NextResponse.json({ error: confirmData.message || '결제 확인에 실패했습니다.' }, { status: 400 })
+      return NextResponse.json(
+        { error: confirmData.message || '결제 확인에 실패했습니다.', code: confirmData.code },
+        { status: 400 }
+      )
     }
 
-    await prisma.order.create({
-      data: {
-        userId: session.user.id,
-        productId: productId || '',
-        amount,
-        status: 'PAID',
-        paymentKey,
-        orderId,
-        method: confirmData.method || '카드',
-        approvedAt: new Date(confirmData.approvedAt || Date.now()),
+    return NextResponse.json({
+      success: true,
+      payment: {
+        paymentKey: confirmData.paymentKey,
+        orderId: confirmData.orderId,
+        orderName: confirmData.orderName,
+        method: confirmData.method,
+        totalAmount: confirmData.totalAmount,
+        approvedAt: confirmData.approvedAt,
+        status: confirmData.status,
       },
     })
-
-    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Payment confirm error:', error)
     return NextResponse.json({ error: '결제 처리 중 오류가 발생했습니다.' }, { status: 500 })

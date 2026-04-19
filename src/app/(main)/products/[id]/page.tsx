@@ -2,6 +2,7 @@ import { getProductById, getProducts } from '@/lib/products'
 import { notFound } from 'next/navigation'
 import { formatKRW } from '@/lib/constants'
 import PaymentButton from '@/components/products/PaymentButton'
+import ReviewSection from '@/components/reviews/ReviewSection'
 import Link from 'next/link'
 
 export function generateStaticParams() {
@@ -65,6 +66,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
       </div>
+
+      <ReviewSection productId={product.id} productName={product.name} />
     </div>
   )
 }

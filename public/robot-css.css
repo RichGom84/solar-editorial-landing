@@ -1,0 +1,138 @@
+/* robot-styles.css */
+#bot-container {
+  width: 150px;
+  height: 150px;
+  position: relative;
+  margin: 0 auto;
+  perspective: 700px;
+}
+
+#bot-body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  border-radius: 50%;
+}
+
+.bot-part {
+  position: absolute;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+}
+
+.bot-head {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ffffff, #f0f0f0, #e8e8e8);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18), inset 3px 3px 15px rgba(255, 255, 255, 0.8), inset -3px -3px 15px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  border-radius: 50%;
+  position: relative;
+  transition: transform 0.1s ease-out;
+}
+
+.bot-ear {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background-color: #e0e0e0;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.6), inset -1px -1px 2px rgba(0, 0, 0, 0.2);
+  top: 50%;
+  transform: translateY(-50%) translateZ(-5px);
+  z-index: -1;
+  transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+}
+
+.left-ear {
+  left: -8px;
+}
+
+.right-ear {
+  right: -8px;
+}
+
+.bot-highlight {
+  position: absolute;
+  top: 20%;
+  left: 25%;
+  width: 30%;
+  height: 15%;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  transform: rotate(-30deg);
+  pointer-events: none;
+}
+
+.bot-eyes {
+  position: relative;
+  width: 60%;
+  height: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transform-style: preserve-3d;
+}
+
+.bot-eye {
+  width: 32px;
+  height: 32px;
+  background-color: black;
+  border-radius: 50%;
+  position: relative;
+  transform-style: preserve-3d;
+  overflow: hidden;
+  transition: transform 0.12s ease-out;
+}
+
+.bot-pupil {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border-radius: 50%;
+  top: 25%;
+  left: 25%;
+  transition: all 0.05s ease-out;
+}
+
+.bot-eyelid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  top: -100%;
+  left: 0;
+  border-radius: 0 0 50% 50%;
+  animation: blink 4s infinite;
+  animation-timing-function: ease-in-out;
+  z-index: 10;
+}
+
+@keyframes blink {
+  0%, 96%, 98% {
+    transform: translateY(0%);
+  }
+  97%, 99% {
+    transform: translateY(100%);
+  }
+}
+
+.shadow {
+  position: absolute;
+  bottom: -15px;
+  left: 15%;
+  width: 70%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  filter: blur(5px);
+  z-index: -1;
+}

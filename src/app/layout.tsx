@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import SessionProvider from "@/components/providers/SessionProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import FirebaseAnalytics from "@/components/providers/FirebaseAnalytics";
 import "./globals.css";
 
 const siteUrl = "https://solarv.netlify.app";
@@ -49,7 +50,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-full antialiased">
-        <SessionProvider>{children}</SessionProvider>
+        <AuthProvider>{children}</AuthProvider>
+        <FirebaseAnalytics />
       </body>
     </html>
   );

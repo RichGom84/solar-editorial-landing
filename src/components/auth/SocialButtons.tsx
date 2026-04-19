@@ -1,13 +1,36 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { signInWithGoogle } from '@/lib/firebase'
 
 export default function SocialButtons() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  const handleGoogle = async () => {
+    if (loading) return
+    setLoading(true)
+    try {
+      await signInWithGoogle()
+      router.push('/')
+      router.refresh()
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return
+      console.error('Google sign-in error:', err)
+      alert('Google 로그인에 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-3">
       <button
-        onClick={() => signIn('google', { callbackUrl: '/' })}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-gray-800 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+        onClick={handleGoogle}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-gray-800 rounded-xl font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -15,17 +38,7 @@ export default function SocialButtons() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Google로 계속하기
-      </button>
-
-      <button
-        onClick={() => signIn('kakao', { callbackUrl: '/' })}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-[#FEE500] text-[#191919] rounded-xl font-medium hover:bg-[#FDD800] transition-colors"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#191919">
-          <path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.63 1.74 4.94 4.36 6.26l-1.1 4.08c-.1.35.3.64.6.44l4.87-3.23c.42.04.85.07 1.27.07 5.52 0 10-3.36 10-7.62C22 6.36 17.52 3 12 3z" />
-        </svg>
-        카카오로 계속하기
+        {loading ? '로그인 중...' : 'Google로 계속하기'}
       </button>
     </div>
   )

@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { signOutFirebase } from '@/lib/firebase'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const { data: session, status } = useSession()
+  const { user, role, loading } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50)
@@ -19,6 +20,13 @@ export default function Navbar() {
     document.getElementById('consult-form')?.scrollIntoView({ behavior: 'smooth' })
     setMenuOpen(false)
   }
+
+  const handleSignOut = async () => {
+    await signOutFirebase()
+    window.location.href = '/'
+  }
+
+  const initial = user?.displayName?.[0] || user?.email?.[0] || '?'
 
   return (
     <nav
@@ -42,17 +50,17 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          {status === 'loading' ? (
+          {loading ? (
             <div className="w-20 h-8" />
-          ) : session ? (
+          ) : user ? (
             <>
               <Link href="/mypage" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">마이페이지</Link>
-              {(session.user as { role?: string })?.role === 'ADMIN' && (
+              {role === 'ADMIN' && (
                 <Link href="/admin" className="text-slate-400 hover:text-emerald-300 transition-colors text-sm font-medium">관리자</Link>
               )}
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="text-slate-400 hover:text-red-400 transition-colors text-sm font-medium">로그아웃</button>
+              <button onClick={handleSignOut} className="text-slate-400 hover:text-red-400 transition-colors text-sm font-medium">로그아웃</button>
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold">
-                {session.user?.name?.[0] || '?'}
+                {initial}
               </div>
             </>
           ) : (
@@ -79,13 +87,13 @@ export default function Navbar() {
           <Link href="/products" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">Products</Link>
           <a href="#faq" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">FAQ</a>
           <hr className="border-slate-800" />
-          {session ? (
+          {user ? (
             <>
               <Link href="/mypage" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">마이페이지</Link>
-              {(session.user as { role?: string })?.role === 'ADMIN' && (
+              {role === 'ADMIN' && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} className="block text-slate-400 hover:text-white py-2">관리자</Link>
               )}
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="block text-red-400 py-2">로그아웃</button>
+              <button onClick={handleSignOut} className="block text-red-400 py-2">로그아웃</button>
             </>
           ) : (
             <>

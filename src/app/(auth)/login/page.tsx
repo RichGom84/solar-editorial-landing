@@ -1,10 +1,10 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import SocialButtons from '@/components/auth/SocialButtons'
+import { signInWithEmail } from '@/lib/firebase'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,19 +17,20 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
-
-    if (result?.error) {
-      setError('이메일 또는 비밀번호가 올바르지 않습니다.')
-      setLoading(false)
-    } else {
+    try {
+      await signInWithEmail(email, password)
       router.push('/')
       router.refresh()
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.')
+      } else if (code === 'auth/too-many-requests') {
+        setError('로그인 시도가 많습니다. 잠시 후 다시 시도해주세요.')
+      } else {
+        setError('로그인 중 오류가 발생했습니다.')
+      }
+      setLoading(false)
     }
   }
 

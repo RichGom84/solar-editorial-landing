@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import SocialButtons from '@/components/auth/SocialButtons'
+import { registerWithEmail } from '@/lib/firebase'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -23,24 +24,27 @@ export default function RegisterPage() {
       setError('비밀번호가 일치하지 않습니다.')
       return
     }
+    if (form.password.length < 6) {
+      setError('비밀번호는 6자 이상이어야 합니다.')
+      return
+    }
 
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || '회원가입에 실패했습니다.')
-        return
+      await registerWithEmail(form.email, form.password, form.name)
+      router.push('/')
+      router.refresh()
+    } catch (err) {
+      const code = (err as { code?: string })?.code
+      if (code === 'auth/email-already-in-use') {
+        setError('이미 가입된 이메일입니다.')
+      } else if (code === 'auth/invalid-email') {
+        setError('이메일 형식이 올바르지 않습니다.')
+      } else if (code === 'auth/weak-password') {
+        setError('비밀번호는 6자 이상이어야 합니다.')
+      } else {
+        setError('회원가입 중 오류가 발생했습니다.')
       }
-
-      router.push('/login')
-    } catch {
-      setError('서버 오류가 발생했습니다.')
     } finally {
       setLoading(false)
     }
